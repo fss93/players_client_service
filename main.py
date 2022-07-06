@@ -16,6 +16,19 @@ WITH replication = {{'class': 'SimpleStrategy', 'replication_factor': '1'}}
 session.execute(keyspace_player_events_ddl)
 session.set_keyspace(keyspace_player_events_name)
 
+# Initialize start_session_events table
+table_start_session_events_name = 'start_session_events'
+table_start_session_events_ddl = f"""
+CREATE TABLE IF NOT EXISTS {table_start_session_events_name} (
+    country text,
+    ts timestamp,
+    session_id text,
+    event text,
+    player_id text,
+    PRIMARY KEY (country, ts, session_id)
+) WITH CLUSTERING ORDER BY (ts DESC, session_id ASC);
+"""
+
 # Initialize end_session_events table
 table_end_session_events_name = 'end_session_events'
 table_end_session_events_ddl = f"""
@@ -29,33 +42,13 @@ CREATE TABLE IF NOT EXISTS {table_end_session_events_name} (
 """
 session.execute(table_end_session_events_ddl)
 
-"""
-with open('/home/sergey/Desktop/unity/assignment_data.jsonl') as input_f:
-    for _ in range(100):
-        str_data = input_f.readline().strip()
-        js_data = json.loads(str_data)
-        if js_data.get('event') == 'end':
-            q = f"INSERT INTO {table_end_session_events_name} (player_id, ts, session_id, event) VALUES ('{js_data.get('player_id')}', '{js_data.get('ts')}', '{js_data.get('session_id')}', 'end')"
-            session.execute(q)
-"""
-
-"""
-with open('/home/sergey/Desktop/unity/assignment_data.jsonl') as input_f:
-    for _ in range(1000):
-        str_data = input_f.readline().strip()
-        js_data = json.loads(str_data)
-        if js_data.get('event') == 'start':
-            q = f"INSERT INTO start_session_events (country, player_id, ts, session_id, event) VALUES ('{js_data.get('country')}', '{js_data.get('player_id')}', '{js_data.get('ts')}', '{js_data.get('session_id')}', 'start')"
-            session.execute(q)
-"""
-
 insert_query_template_start_session = """
-    INSERT INTO start_session_events (country, player_id, ts, session_id, event)
+    INSERT INTO {table_name} (country, player_id, ts, session_id, event)
     VALUES ('{country}', '{player_id}', '{ts}', '{session_id}', '{event_type}')
 """
 
 insert_query_template_end_session = """
-    INSERT INTO end_session_events (player_id, ts, session_id, event)
+    INSERT INTO {table_name} (player_id, ts, session_id, event)
     VALUES ('{player_id}', '{ts}', '{session_id}', '{event_type}')
 """
 
@@ -65,6 +58,7 @@ for batch_str in test_case_simple_upload_f:
     for event in batch:
         if event.get('event') == 'start':
             insert_query_start_session = insert_query_template_start_session.format(
+                table_name=table_start_session_events_name,
                 country=event.get('country'),
                 player_id=event.get('player_id'),
                 ts=event.get('ts'),
@@ -74,6 +68,7 @@ for batch_str in test_case_simple_upload_f:
             session.execute(insert_query_start_session)
         elif event.get('event') == 'end':
             insert_query_end_session = insert_query_template_end_session.format(
+                table_name=table_end_session_events_name,
                 player_id=event.get('player_id'),
                 ts=event.get('ts'),
                 session_id=event.get('session_id'),
