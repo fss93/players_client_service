@@ -1,11 +1,11 @@
 from flask import Flask, request
-from flask_restful import Api, Resource, reqparse
+from flask_restful import Api, Resource  # , reqparse
 
 app = Flask(__name__)
 api = Api(app)
 
-sessions_put_args = reqparse.RequestParser()
-sessions_put_args.add_argument('session_list', type=list)
+# sessions_put_args = reqparse.RequestParser()
+# sessions_put_args.add_argument('session_list', type=list)
 
 
 class HelloWorld(Resource):
