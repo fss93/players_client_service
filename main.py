@@ -1,3 +1,5 @@
+import datetime
+
 from cassandra.cluster import Cluster
 import json
 from flask import Flask, request
@@ -136,8 +138,26 @@ class EndEventsByPlayer(Resource):
         return player_end_sessions_list, 200
 
 
+class RecentStartEvents(Resource):
+    def get(self, hrs):
+        relevance_dttm = datetime.datetime.now() - datetime.timedelta(hours=float(hrs))
+        select_query_template_start_sessions = """
+                SELECT JSON * FROM {table_name} WHERE ts >= '{dttm}' ALLOW FILTERING;
+                """
+        select_query_start_sessions = select_query_template_start_sessions.format(
+            table_name=table_name_start_session_events,
+            dttm=relevance_dttm
+        )
+        query_response = session.execute(select_query_start_sessions)
+        player_start_sessions_list = []
+        for row in query_response:
+            player_start_sessions_list.append(json.loads(row.json))
+        return player_start_sessions_list, 200
+
+
 api.add_resource(PutSessions, '/put_events')
 api.add_resource(EndEventsByPlayer, '/end_players_events/<string:player_id>')
+api.add_resource(RecentStartEvents, '/start_players_events/<string:hrs>')
 
 if __name__ == '__main__':
     app.run(debug=True)

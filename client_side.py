@@ -1,5 +1,6 @@
 import json
 import requests
+import datetime
 
 base = 'http://127.0.0.1:5000/'
 # with open('test_case_simple_upload.txt', encoding='utf-8') as f:
@@ -7,5 +8,8 @@ base = 'http://127.0.0.1:5000/'
 #         batch = json.loads(batch)
 #         requests.post(base + 'put_events', json=batch)
 
-r = requests.get(base + 'end_players_events/' + '32bb90e8976aab5298d5da10fe66f21d')
-print(r.json())
+r_end = requests.get(base + 'end_players_events/' + '32bb90e8976aab5298d5da10fe66f21d')
+print(r_end.json())
+
+r_start = requests.get(base + 'start_players_events/' + '700.5')
+print(r_start.text)
