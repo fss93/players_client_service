@@ -1,6 +1,6 @@
 # Create 10 countries
 # Create 100 players. 10 players per country
-# Generate 5 sessions per each player. Each session opens and closes. Total of 10 events pre player
+# Generate 5 sessions per each player. Each session opens and closes. Total of 10 events per player
 
 import hashlib
 import random
