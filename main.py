@@ -6,6 +6,9 @@ from flask_restful import Api, Resource
 # Connect to Cassandra
 # TODO: provide correct credentials
 # TODO: replace insert by insert json
+# TODO: add TTL
+# TODO: set UTC time
+# TODO: Add "No content code" 204
 # https://docs.datastax.com/en/dse/6.0/cql/cql/cql_using/useInsertJSON.html
 
 
@@ -120,12 +123,17 @@ class PutSessions(Resource):
 class EndEventsByPlayer(Resource):
     def get(self, player_id):
         select_query_template_end_sessions = """
-        SELECT * FROM {table_name} WHERE player_id = '{player_id}' LIMIT 20;
+        SELECT JSON * FROM {table_name} WHERE player_id = '{player_id}' LIMIT 20;
         """
         select_query_end_sessions = select_query_template_end_sessions.format(
             table_name=table_name_end_session_events,
             player_id=player_id
         )
+        query_response = session.execute(select_query_end_sessions)
+        player_end_sessions_list = []
+        for row in query_response:
+            player_end_sessions_list.append(json.loads(row.json))
+        return player_end_sessions_list, 200
 
 
 api.add_resource(PutSessions, '/put_events')
