@@ -10,7 +10,9 @@ from flask_restful import Api, Resource
 # TODO: replace insert by insert json
 # TODO: add TTL
 # TODO: set UTC time
+# TODO: set proper datetime format in output
 # TODO: Add "No content code" 204
+# TODO: Add schema validation
 # https://docs.datastax.com/en/dse/6.0/cql/cql/cql_using/useInsertJSON.html
 
 
@@ -58,11 +60,13 @@ session.execute(table_ddl_end_session_events)
 insert_query_template_start_session = """
     INSERT INTO {table_name} (country, player_id, ts, session_id, event)
     VALUES ('{country}', '{player_id}', '{ts}', '{session_id}', '{event_type}')
+    USING TTL {ttl};
 """
 
 insert_query_template_end_session = """
     INSERT INTO {table_name} (player_id, ts, session_id, event)
     VALUES ('{player_id}', '{ts}', '{session_id}', '{event_type}')
+    USING TTL {ttl};
 """
 """
 test_case_simple_upload_f = open('test_case_simple_upload.txt', encoding='utf-8')
@@ -100,6 +104,12 @@ class PutSessions(Resource):
     def post(self):
         events = request.get_json()
         for event in events:
+            event_datetime = datetime.datetime.strptime(event.get('ts'), '%Y-%m-%dT%H:%M:%S')
+            expiration_datetime = event_datetime + datetime.timedelta(days=365)
+            ttl = (expiration_datetime - datetime.datetime.now()).total_seconds()
+            ttl = int(ttl)
+            if ttl <= 0:
+                continue
             if event.get('event') == 'start':
                 insert_query_start_session = insert_query_template_start_session.format(
                     table_name=table_name_start_session_events,
@@ -107,7 +117,8 @@ class PutSessions(Resource):
                     player_id=event.get('player_id'),
                     ts=event.get('ts'),
                     session_id=event.get('session_id'),
-                    event_type=event.get('event')
+                    event_type=event.get('event'),
+                    ttl=ttl
                 )
                 session.execute(insert_query_start_session)
             elif event.get('event') == 'end':
@@ -116,7 +127,8 @@ class PutSessions(Resource):
                     player_id=event.get('player_id'),
                     ts=event.get('ts'),
                     session_id=event.get('session_id'),
-                    event_type=event.get('event')
+                    event_type=event.get('event'),
+                    ttl=ttl
                 )
                 session.execute(insert_query_end_session)
         return '', 201
@@ -140,13 +152,13 @@ class EndEventsByPlayer(Resource):
 
 class RecentStartEvents(Resource):
     def get(self, hrs):
-        relevance_dttm = datetime.datetime.now() - datetime.timedelta(hours=float(hrs))
+        relevance_datetime = datetime.datetime.now() - datetime.timedelta(hours=float(hrs))
         select_query_template_start_sessions = """
-                SELECT JSON * FROM {table_name} WHERE ts >= '{dttm}' ALLOW FILTERING;
+                SELECT JSON * FROM {table_name} WHERE ts >= '{relevance_datetime}' ALLOW FILTERING;
                 """
         select_query_start_sessions = select_query_template_start_sessions.format(
             table_name=table_name_start_session_events,
-            dttm=relevance_dttm
+            relevance_datetime=relevance_datetime
         )
         query_response = session.execute(select_query_start_sessions)
         player_start_sessions_list = []
