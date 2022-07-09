@@ -8,13 +8,13 @@ from flask_restful import Api, Resource
 # Connect to Cassandra
 # TODO: provide correct credentials
 # TODO: replace insert by insert json
-# TODO: add TTL
 # TODO: set UTC time
 # TODO: set proper datetime format in output
 # TODO: Add "No content code" 204
-# TODO: Add schema validation
+# TODO: Add schema validation and date validation
+# TODO: What status to return when not all events are inserted? What message to return?
 # https://docs.datastax.com/en/dse/6.0/cql/cql/cql_using/useInsertJSON.html
-
+# Decided to insert by events (not batches). Broken events store in special table
 
 cluster = Cluster()
 session = cluster.connect()
