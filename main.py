@@ -68,33 +68,7 @@ insert_query_template_end_session = """
     VALUES ('{player_id}', '{ts}', '{session_id}', '{event_type}')
     USING TTL {ttl};
 """
-"""
-test_case_simple_upload_f = open('test_case_simple_upload.txt', encoding='utf-8')
-for batch_str in test_case_simple_upload_f:
-    batch = json.loads(batch_str)
-    for event in batch:
-        if event.get('event') == 'start':
-            insert_query_start_session = insert_query_template_start_session.format(
-                table_name=table_name_start_session_events,
-                country=event.get('country'),
-                player_id=event.get('player_id'),
-                ts=event.get('ts'),
-                session_id=event.get('session_id'),
-                event_type=event.get('event')
-            )
-            session.execute(insert_query_start_session)
-        elif event.get('event') == 'end':
-            insert_query_end_session = insert_query_template_end_session.format(
-                table_name=table_name_end_session_events,
-                player_id=event.get('player_id'),
-                ts=event.get('ts'),
-                session_id=event.get('session_id'),
-                event_type=event.get('event')
-            )
-            session.execute(insert_query_end_session)
 
-test_case_simple_upload_f.close()
-"""
 # Start rest api server
 app = Flask(__name__)
 api = Api(app)
