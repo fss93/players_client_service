@@ -48,20 +48,19 @@ To test the service manually, start it using command
 ```shell
 python main.py
 ```
-Run file `generate_test_simple_upload.py`. It creates file
-`test_case_simple_upload.txt` which contains batches of events for testing.
-Run file `client.py` in IDE to test interaction with rest api server. Use
+Run file `client.py` in IDE to test interaction with rest api server. Firstly,
+it creates file `test_case_simple_upload.txt` which contains batches of events
+for testing. Then it uploads test cases to the server. Use
 different `player_id` and `hours` to visually check output.
 #### Auto tests
 To test the service automatically, start the server using command
 ```shell
 python main.py
 ```
-Run file `generate_test_simple_upload.py`. It creates file
-`test_case_simple_upload.txt` which contains batches of events for testing.
-Run file `generate_test_outdated_events.py`. It creates file
-`test_case_outdated_events.txt` which contains events older than 1 year.
-After that run file `auto_test.py`.
+Run file `auto_test.py`. Firstly, it creates two files with test batches.
+`test_case_simple_upload.txt` contains batches of recent events (not older than
+1 month).
+`test_case_outdated_events.txt` contains events older than 1 year.
 * Test 1. Upload batches from `test_case_simple_upload.txt` to Cassandra
 using rest api. Check number of rows in database
 * Test 2. Check latency for put method. It should be less than 500 ms in 90%
