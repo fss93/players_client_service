@@ -1,0 +1,4 @@
+cassandra_driver==3.25.0
+Flask==2.1.2
+Flask_RESTful==0.3.9
+requests==2.28.1
