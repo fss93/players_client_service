@@ -1,9 +1,10 @@
 """
-Generate test events and write them into file test_case_simple_upload.txt
+Generate test events and write them into files
 Create 10 countries
-Create 100 players. 10 players per country
-Create 5 sessions per each player. Each session opens and closes. Total of 10 events per player
-Events' timestamps are not older than 1 month
+Create n players per each country.
+Create m sessions per each player. Each session opens and closes.
+Events' timestamps are not older than 1 month for RecentTestCase
+Events' timestamps are older than 1 year for OutdatedTestCase
 """
 
 import hashlib
