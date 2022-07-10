@@ -28,7 +28,7 @@ python main.py
 ## Features
 
 #### Post batch of player's sessions
-Use `POST` method to send a batch of 10 sessions on http://127.0.0.1:5000/put_events
+Use `POST` method to send a batch of 10 events on http://127.0.0.1:5000/put_events
 as a json object
 
 #### Fetch last 20 completed sessions for a given player
