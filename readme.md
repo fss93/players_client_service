@@ -41,3 +41,36 @@ Use `GET` method to fetch start sessions for the last `x` hours. `x` might be
 either integer or float. Sessions will be grouped by country.
 
 http://127.0.0.1:5000/start_players_events/0.5
+
+## Tests
+#### Manual tests
+To test the service manually, start it using command
+```shell
+python main.py
+```
+Run file `generate_test_simple_upload.py`. It creates file
+`test_case_simple_upload.txt` which contains batches of events for testing.
+Run file `client.py` in IDE to test interaction with rest api server. Use
+different `player_id` and `hours` to visually check output.
+#### Auto tests
+To test the service automatically, start the server using command
+```shell
+python main.py
+```
+Run file `generate_test_simple_upload.py`. It creates file
+`test_case_simple_upload.txt` which contains batches of events for testing.
+Run file `generate_test_outdated_events.py`. It creates file
+`test_case_outdated_events.txt` which contains events older than 1 year.
+After that run file `auto_test.py`.
+* Test 1. Upload batches from `test_case_simple_upload.txt` to Cassandra
+using rest api. Check number of rows in database
+* Test 2. Check latency for put method. It should be less than 500 ms in 90%
+cases
+* Test 3. Try to post events older than 1 year. Check that they are not posted.
+* Test 4. Check TTL. Events older than 1 year should be removed from Cassandra
+* Test 5. Check `end_players_events` method for a given `player_id`
+* Test 6. Check `start_players_events` method. 
+* Test 7. Check latency for `end_players_events` method. It should be less
+than 500 ms in 90% cases
+* Test 8. Check latency for `start_players_events` method. It should be less
+than 500 ms in 90% cases
