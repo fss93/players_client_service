@@ -13,6 +13,9 @@ from flask_restful import Api, Resource
 # TODO: Add "No content code" 204
 # TODO: Add schema validation and date validation
 # TODO: What status to return when not all events are inserted? What message to return?
+# TODO: Store broken events in special table
+# TODO: Put all query templates in one place (in head of main program or in class)
+# TODO: async
 # https://docs.datastax.com/en/dse/6.0/cql/cql/cql_using/useInsertJSON.html
 # Decided to insert by events (not batches). Broken events store in special table
 
@@ -58,8 +61,8 @@ session.execute(table_ddl_end_session_events)
 
 # Insert query templates
 insert_query_template_start_session = """
-    INSERT INTO {table_name} (country, player_id, ts, session_id, event)
-    VALUES ('{country}', '{player_id}', '{ts}', '{session_id}', '{event_type}')
+    INSERT INTO {table_name}
+    JSON '{start_session_json}'
     USING TTL {ttl};
 """
 
@@ -87,11 +90,7 @@ class PutSessions(Resource):
             if event.get('event') == 'start':
                 insert_query_start_session = insert_query_template_start_session.format(
                     table_name=table_name_start_session_events,
-                    country=event.get('country'),
-                    player_id=event.get('player_id'),
-                    ts=event.get('ts'),
-                    session_id=event.get('session_id'),
-                    event_type=event.get('event'),
+                    start_session_json=json.dumps(event),
                     ttl=ttl
                 )
                 session.execute(insert_query_start_session)
