@@ -16,7 +16,7 @@ pip install -r requirements.txt
 By default, service connects to a Cassandra instance on your local machine
 (127.0.0.1). You can also specify a list of IP addresses for nodes in `main.py`
 
-### Deploying / Publishing
+### Running
 
 To run service simply use
 
@@ -29,7 +29,7 @@ python main.py
 
 #### Post batch of player's sessions
 Use `POST` method send a batch of 10 sessions on http://127.0.0.1:5000/put_events
-as json object
+as a json object
 
 #### Fetch last 20 completed sessions for a given player
 Use `GET` method to fetch last 20 completed sessions for a given `player_id`
