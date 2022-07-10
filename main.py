@@ -67,8 +67,8 @@ insert_query_template_start_session = """
 """
 
 insert_query_template_end_session = """
-    INSERT INTO {table_name} (player_id, ts, session_id, event)
-    VALUES ('{player_id}', '{ts}', '{session_id}', '{event_type}')
+    INSERT INTO {table_name}
+    JSON '{end_session_json}'
     USING TTL {ttl};
 """
 
@@ -97,10 +97,7 @@ class PutSessions(Resource):
             elif event.get('event') == 'end':
                 insert_query_end_session = insert_query_template_end_session.format(
                     table_name=table_name_end_session_events,
-                    player_id=event.get('player_id'),
-                    ts=event.get('ts'),
-                    session_id=event.get('session_id'),
-                    event_type=event.get('event'),
+                    end_session_json=json.dumps(event),
                     ttl=ttl
                 )
                 session.execute(insert_query_end_session)
