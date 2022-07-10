@@ -2,12 +2,31 @@ import json
 import requests
 import datetime
 from cassandra.cluster import Cluster
+from generate_test_cases import RecentTestCase, OutdatedTestCase
 
 cluster = Cluster()
 session = cluster.connect()
 session.set_keyspace('player_events')
 
 base = 'http://127.0.0.1:5000/'
+
+# Generate files with test batches
+# Generate recent events (not older than one month)
+recent_test_case = RecentTestCase()
+recent_test_case.generate_sample(
+    players_per_country=10,
+    sessions_per_player=5,
+    file_name='test_case_simple_upload.txt'
+)
+
+# Generate old events (older than one year)
+outdated_test_case = OutdatedTestCase()
+outdated_test_case.generate_sample(
+    players_per_country=1,
+    sessions_per_player=5,
+    file_name='test_case_outdated_events.txt'
+)
+
 
 # Test 1
 # Put 500 start events and 500 end events
