@@ -12,6 +12,7 @@ import random
 from random import randrange
 import datetime
 import json
+from pathlib import Path
 
 
 class RecentTestCase:
@@ -32,6 +33,11 @@ class RecentTestCase:
         """
         Generate test batches
         """
+        # If file already exists, pass
+        test_events_file = Path(file_name)
+        if test_events_file.is_file():
+            return
+
         # Total number of players to generate
         number_of_players = players_per_country * len(self.countries)
         # Total number of sessions to generate
