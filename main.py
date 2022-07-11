@@ -1,24 +1,11 @@
 import datetime
-
-from cassandra.cluster import Cluster
 import json
+from cassandra.cluster import Cluster
 from flask import Flask, request
 from flask_restful import Api, Resource
 
 # Connect to Cassandra
 # TODO: provide correct credentials
-# TODO: replace insert by insert json
-# TODO: set UTC time
-# TODO: set proper datetime format in output
-# TODO: Add "No content code" 204
-# TODO: Add schema validation and date validation
-# TODO: What status to return when not all events are inserted? What message to return?
-# TODO: Store broken events in special table
-# TODO: Put all query templates in one place (in head of main program or in class)
-# TODO: async
-# https://docs.datastax.com/en/dse/6.0/cql/cql/cql_using/useInsertJSON.html
-# Decided to insert by events (not batches). Broken events store in special table
-
 cluster = Cluster()
 session = cluster.connect()
 
@@ -59,45 +46,45 @@ CREATE TABLE IF NOT EXISTS {table_name_end_session_events} (
 """
 session.execute(table_ddl_end_session_events)
 
-# Insert query templates
-insert_query_template_start_session = """
-    INSERT INTO {table_name}
-    JSON '{start_session_json}'
-    USING TTL {ttl};
-"""
 
-insert_query_template_end_session = """
-    INSERT INTO {table_name}
-    JSON '{end_session_json}'
-    USING TTL {ttl};
-"""
-
-# Start rest api server
+# Init rest api server
 app = Flask(__name__)
 api = Api(app)
 
 
 class PutSessions(Resource):
+    """Insert batch of events into database"""
+    insert_query_template = """
+                INSERT INTO {table_name}
+                JSON '{event_json}'
+                USING TTL {ttl};
+            """
+
     def post(self):
+        # Get batch as json
         events = request.get_json()
         for event in events:
+            # Calculate time to live in seconds
             event_datetime = datetime.datetime.strptime(event.get('ts'), '%Y-%m-%dT%H:%M:%S')
             expiration_datetime = event_datetime + datetime.timedelta(days=365)
             ttl = (expiration_datetime - datetime.datetime.now()).total_seconds()
             ttl = int(ttl)
+            # Records older than 365 days are ignored
             if ttl <= 0:
                 continue
             if event.get('event') == 'start':
-                insert_query_start_session = insert_query_template_start_session.format(
+                # Insert start event
+                insert_query_start_session = self.insert_query_template.format(
                     table_name=table_name_start_session_events,
-                    start_session_json=json.dumps(event),
+                    event_json=json.dumps(event),
                     ttl=ttl
                 )
                 session.execute(insert_query_start_session)
             elif event.get('event') == 'end':
-                insert_query_end_session = insert_query_template_end_session.format(
+                # Insert end event
+                insert_query_end_session = self.insert_query_template.format(
                     table_name=table_name_end_session_events,
-                    end_session_json=json.dumps(event),
+                    event_json=json.dumps(event),
                     ttl=ttl
                 )
                 session.execute(insert_query_end_session)
@@ -105,11 +92,13 @@ class PutSessions(Resource):
 
 
 class EndEventsByPlayer(Resource):
+    select_query_template_end_sessions = """
+            SELECT JSON * FROM {table_name} WHERE player_id = '{player_id}' LIMIT 20;
+            """
+
     def get(self, player_id):
-        select_query_template_end_sessions = """
-        SELECT JSON * FROM {table_name} WHERE player_id = '{player_id}' LIMIT 20;
-        """
-        select_query_end_sessions = select_query_template_end_sessions.format(
+        # Fetch the last 20 records for a given player
+        select_query_end_sessions = self.select_query_template_end_sessions.format(
             table_name=table_name_end_session_events,
             player_id=player_id
         )
@@ -121,12 +110,17 @@ class EndEventsByPlayer(Resource):
 
 
 class RecentStartEvents(Resource):
+    select_query_template_start_sessions = """
+                    SELECT JSON *
+                    FROM {table_name}
+                    WHERE ts >= '{relevance_datetime:%Y-%m-%d %H:%M:%S}'
+                    ALLOW FILTERING;
+                    """
+
     def get(self, hrs):
+        # Fetch sessions for the last hrs hours grouped by country
         relevance_datetime = datetime.datetime.now() - datetime.timedelta(hours=float(hrs))
-        select_query_template_start_sessions = """
-                SELECT JSON * FROM {table_name} WHERE ts >= '{relevance_datetime}' ALLOW FILTERING;
-                """
-        select_query_start_sessions = select_query_template_start_sessions.format(
+        select_query_start_sessions = self.select_query_template_start_sessions.format(
             table_name=table_name_start_session_events,
             relevance_datetime=relevance_datetime
         )
@@ -137,9 +131,10 @@ class RecentStartEvents(Resource):
         return player_start_sessions_list, 200
 
 
+# Add rest api resources
 api.add_resource(PutSessions, '/put_events')
 api.add_resource(EndEventsByPlayer, '/end_players_events/<string:player_id>')
 api.add_resource(RecentStartEvents, '/start_players_events/<string:hrs>')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
