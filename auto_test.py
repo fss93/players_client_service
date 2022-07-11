@@ -50,6 +50,7 @@ assert start_resp.one().count == 500
 end_query = "SELECT count(*) FROM end_session_events;"
 end_resp = session.execute(end_query)
 assert end_resp.one().count == 500
+print('Test 1 OK')
 
 # Test 2
 # Check write latency
@@ -61,6 +62,7 @@ for lat in post_latency:
         slow_writes += 1
 
 assert slow_writes / total_writes < 0.1
+print('Test 2 OK')
 
 # Test 3
 # Post events older than 1 year
@@ -76,6 +78,7 @@ assert start_resp.one().count == 500
 
 end_resp = session.execute(end_query)
 assert end_resp.one().count == 500
+print('Test 3 OK')
 
 # Test 4
 # Check TTL
@@ -90,6 +93,7 @@ for row in ttl_resp:
              - datetime.timedelta(days=365)
              ).total_seconds()
     assert error < 10
+print('Test 4 OK')
 
 # Test 5
 # Check player_id
@@ -99,6 +103,7 @@ assert len(end_sessions.json()) == 5
 
 for event in end_sessions.json():
     assert event.get('player_id') == '32bb90e8976aab5298d5da10fe66f21d'
+print('Test 5 OK')
 
 # Test 6
 # Check sessions for last X hours
@@ -108,6 +113,7 @@ for event in start_sessions.json():
     # Check that fetched timestamp is not older than X hours
     event_datetime = datetime.datetime.strptime(event.get('ts'), '%Y-%m-%d %H:%M:%S.000Z')
     assert event_datetime >= datetime.datetime.utcnow() - datetime.timedelta(hours=x)
+print('Test 6 OK')
 
 # Test 7
 # Check get_end_sessions latency
@@ -122,7 +128,7 @@ for player_id in players:
         slow_reads += 1
 
 assert slow_reads / len(players) < 0.1
-
+print('Test 7 OK')
 
 # Test 8
 # Check get_start_sessions latency
@@ -137,3 +143,4 @@ for hrs in range(100):
         slow_reads += 1
 
 assert slow_reads / 100 < 0.1
+print('Test 8 OK')
